@@ -1,7 +1,7 @@
 class Creature {
   constructor(x, y, nn = null, gen = 0, parent = null) {
     this.pos = createVector(x, y);
-    this.vel = createVector();
+    this.vel = p5.Vector.random2D().mult(0.0001);
     this.acc = createVector();
     
     this.gen = gen;
@@ -22,11 +22,21 @@ class Creature {
   }
   
   show() {  
-    fill(0);
+    fill(0, 255, 0);
     if (this.gen == 0) {
       fill(255);
     }
-    circle(this.pos.x, this.pos.y, this.r*2);
+    push();
+    translate(this.pos.x, this.pos.y);
+    rotate(this.vel.heading() + HALF_PI);
+
+    beginShape();
+    vertex(0, -this.r * 1.5);
+    vertex(-this.r, this.r * 2);
+    vertex(this.r, this.r * 2);
+    endShape(CLOSE);
+
+    pop();
   }
   
   update() {
@@ -38,7 +48,7 @@ class Creature {
       
       if (dst < this.r + 4) {
         i.set(random(width), random(height));
-        this.energy += 2;
+        this.energy += 1;
         continue;
       }
       
@@ -67,23 +77,22 @@ class Creature {
     this.pos.add(this.vel);
     
     this.vel.limit(this.maxVel);
-    
+    this.show();
     this.edges();
     
-    this.show();
     
     this.energy -= 0.005;
   }
   
   edges() {
-    if (this.pos.x > width + this.r)
-      this.pos.x = -this.r;
-    if (this.pos.x < -this.r)
-      this.pos.x = width + this.r;
+    if (this.pos.x > width/2 * 6 + this.r)
+      this.pos.x = -width/2 * 6 - this.r;
+    if (this.pos.x < -width/2 * 6 - this.r)
+      this.pos.x = width/2 * 6 + this.r;
     
-    if (this.pos.y > height + this.r)
-      this.pos.y = -this.r;
-    if (this.pos.y < -this.r)
-      this.pos.y = height + this.r;
+    if (this.pos.y > height/2 * 6 + this.r)
+      this.pos.y = -height/2 * 6 - this.r;
+    if (this.pos.y < -height/2 * 6 - this.r)
+      this.pos.y = height/2 * 6 + this.r;
   }
 }
