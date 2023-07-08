@@ -78,12 +78,12 @@ class NeuralNetwork {
     this.nextNodeId = 0;
 
     for (let i = 0; i < numI; i++) {
-      this.nodes.push(new Node(this.nextNodeId, 0));
+      this.nodes.push(new Node(this.nextNodeId, 0, labelsI[i]));
       this.nextNodeId++;
     }
 
     for (let i = 0; i < numO; i++) {
-      this.nodes.push(new Node(this.nextNodeId, Number.POSITIVE_INFINITY));
+      this.nodes.push(new Node(this.nextNodeId, Number.POSITIVE_INFINITY, labelsO[i]));
       this.nextNodeId++;
     }
   }

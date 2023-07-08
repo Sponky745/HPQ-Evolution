@@ -13,6 +13,14 @@ let view = {
   zoom: 0.25,
 };
 
+let modes = {
+  select: "SELECT",
+  draw:   "DRAW"  ,
+  pan:    "PAN"   ,
+};
+
+let mode = modes.pan;
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -20,7 +28,7 @@ function setup() {
     population.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
   }
 
-  for (let i = 0; i < 800; i++) {
+  for (let i = 0; i < 1000; i++) {
     food.push(createVector(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     
     // food.push(createVector(random(width), random(height)));
@@ -34,6 +42,7 @@ function setup() {
 }
 
 function draw() {
+  // push();
   background(204, 0, 0);
   translate(width/2 + view.offset.x, height/2 + view.offset.y);
   scale(view.zoom);
@@ -71,16 +80,28 @@ function draw() {
 
   for (let i of food) {
     fill(0, 255, 0);
-    circle(i.x, i.y, 12);
+    circle(i.x, i.y, 14);
   }
-  
+  // pop();
   
   
   if (mouseIsPressed) {
-    if (!clickedLastFrame) {
-      clickedLastFrame = true;
-    } else {
-      view.offset.add(createVector(mouseX, mouseY).sub(prevMousePos));
+    switch (mode) {
+      case modes.pan:
+        if (!clickedLastFrame) {
+          clickedLastFrame = true;
+        } else {
+          view.offset.add(createVector(mouseX, mouseY).sub(prevMousePos));
+        } 
+        break;
+      case modes.draw:
+        let brushSize = 50;
+        let pos = createVector(mouseX + random(-brushSize/2, brushSize/2), mouseY + random(-brushSize/2, brushSize/2));
+        pos.sub(view.offset);
+        pos.x -= width/2;
+        pos.y -= height/2;
+        pos.div(view.zoom);
+        food.push(pos.copy());
     }
   } else {
     clickedlastFrame = false;
@@ -90,17 +111,22 @@ function draw() {
 }
 
 function mousePressed() {
-  let record = Infinity;
-  let cr = null;
-  for (let i = population.length-1; i >= 0; i--) {
-    let creature = population[i];
+
+  switch (mode) {
+    case modes.select:
+      let record = Infinity;
+      let cr = null;
+      for (let i = population.length-1; i >= 0; i--) {
+        let creature = population[i];
+        
+        if (dist(mouseX, mouseY, creature.pos.x, creature.pos.y) < record) {
+          cr = creature;
+        }
+      }
     
-    if (dist(mouseX, mouseY, creature.pos.x, creature.pos.y) < record) {
-      cr = creature;
-    }
+      print(cr);
+      break;
   }
-  
-  print(cr);
 }
 
 function mouseWheel(e) {

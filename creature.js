@@ -44,9 +44,9 @@ class Creature {
     for (let i of food) {
       const dst = p5.Vector.dist(this.pos, i);
       
-      if (dst < this.r + 6) {
+      if (dst < this.r + 7) {
         i.set(random(width), random(height));
-        this.energy += 1;
+        this.energy += random(2, 2.5);
         continue;
       }
       
