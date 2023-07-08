@@ -1,20 +1,16 @@
 class Creature {
   constructor(x, y, nn = null, gen = 0, parent = null) {
-    this.pos = createVector(x, y);
-    this.vel = p5.Vector.random2D().mult(0.0001);
-    this.acc = createVector();
-    
-    this.gen = gen;
+    this.pos    = createVector(x, y);
+    this.vel    = p5.Vector.random2D().mult(0.0001);
+    this.acc    = createVector();
+    this.gen    = gen;
     this.parent = parent;
-    
-    this.brain = (nn) ? nn.clone() : new NeuralNetwork(7, 2, ["posx", "posy", "velx", "vely", "distToFood", "energy", "pheremone", "bias"], ["movex", "movey"]);
-    
-    this.r = 8;
+    this.brain  = (nn) ? nn.clone() : new NeuralNetwork(8, 3, ["posx", "posy", "velx", "vely", "angle", "distToFood", "energy", "pheremone", "bias"], ["turnleft", "turnright", "forward"]);
+    this.r      = 8;
     this.maxVel = 4;
-    
     this.energy = 4;
     
-    // this.brain.mutate();
+    this.brain.mutate();
   }
   
   reproduce() {
@@ -43,12 +39,12 @@ class Creature {
   
   update() {
     let distance = dist(0, 0, width, height);
-    let maxDst = dist(0, 0, width, height);
+    let maxDst   = dist(0, 0, width, height);
     
     for (let i of food) {
       const dst = p5.Vector.dist(this.pos, i);
       
-      if (dst < this.r + 4) {
+      if (dst < this.r + 6) {
         i.set(random(width), random(height));
         this.energy += 1;
         continue;
@@ -57,26 +53,25 @@ class Creature {
       if (dst < distance) 
         distance = dst;
     }
-    
-    
-      
   
     this.acc.set(0, 0);
     
     let force = this.brain.feedforward([
-      this.pos.x / width, this.pos.y / height,
-      this.vel.x / this.maxVel, this.vel.y / this.maxVel,
-      distance / maxDst, this.energy / 8, 0, 1 // TODO: Pheremone
-    ], this.gen > 0);
+      this.pos.x / width, this.pos.y / height, // position
+      this.vel.x / this.maxVel, this.vel.y / this.maxVel, // velocity
+      this.vel.heading() / TWO_PI, // angle
+      distance / maxDst, // distance to nearest food pellet
+      this.energy / 8, // energy
+      0, // TODO: Pheremone
+      1 // bias
+    ]);
     
-    // if (this.gen > 0) {
-    //   print(force);
-    // }
-    
-    this.acc.add(createVector(force[0], force[1]));
+    this.acc = p5.Vector.fromAngle(this.vel.heading() - force[0] + force[1]).mult(force[2]);
     
     this.vel.add(this.acc);
     this.pos.add(this.vel);
+
+    this.vel.rotate(force[1] - force[0]);
     
     this.vel.limit(this.maxVel);
     this.show();
@@ -88,13 +83,13 @@ class Creature {
   
   edges() {
     if (this.pos.x > width/2 * 6 + this.r)
-      this.pos.x = -width/2 * 6 - this.r;
+        this.pos.x = -width/2 * 6 - this.r;
     if (this.pos.x < -width/2 * 6 - this.r)
-      this.pos.x = width/2 * 6 + this.r;
+        this.pos.x = width/2 * 6 + this.r;
     
     if (this.pos.y > height/2 * 6 + this.r)
-      this.pos.y = -height/2 * 6 - this.r;
+        this.pos.y = -height/2 * 6 - this.r;
     if (this.pos.y < -height/2 * 6 - this.r)
-      this.pos.y = height/2 * 6 + this.r;
+        this.pos.y = height/2 * 6 + this.r;
   }
 }

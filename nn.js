@@ -125,7 +125,6 @@ class NeuralNetwork {
     }
 
     for (let i = 0; i < this.connections.length; i++) {
-      print(this.connections[i].clone(newNet.getNodeById(this.connections[i].a), newNet.getNodeById(this.connections[i].b)));
       newNet.connections[i] = this.connections[i].clone(newNet.getNodeById(this.connections[i].a), newNet.getNodeById(this.connections[i].b));
     }
 
@@ -153,7 +152,6 @@ class NeuralNetwork {
 
     for (let i of this.nodes) {
       i.clean();
-      print(i.output);
     }
 
     return [...outputs];

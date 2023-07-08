@@ -18,12 +18,10 @@ function setup() {
 
   for (let i = 0; i < 100; i++) {
     population.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
-    
-//     population.push(new Creature(random(width), random(height)));
   }
 
-  for (let i = 0; i < 200; i++) {
-    food.push(createVector(random(-width/2 * 6, width/2 * 3), random(-height/2 * 6, height/2 * 6)));
+  for (let i = 0; i < 800; i++) {
+    food.push(createVector(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     
     // food.push(createVector(random(width), random(height)));
   }
@@ -31,6 +29,8 @@ function setup() {
   view.offset = createVector(0, 0);
   
   prevMousePos = createVector(mouseX, mouseY);
+
+  console.log("Version: 1.3");
 }
 
 function draw() {
@@ -52,17 +52,26 @@ function draw() {
       creature.energy *= 0;
       let cr = creature.reproduce();
       newPop.push(cr);
+      print(cr);
     } 
     
     if (creature.energy > 0) {
       newPop.push(creature);
     }
   }
+
+  if (newPop.length == 0) {
+    print(`EXODUS EVENT OCCURED`);
+    for (let i = 0; i < 100; i++) {
+      newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
+    }
+  }
+
   population = newPop;
 
   for (let i of food) {
     fill(0, 255, 0);
-    circle(i.x, i.y, 8);
+    circle(i.x, i.y, 12);
   }
   
   
