@@ -52,11 +52,10 @@ function draw() {
       creature.energy *= 0;
       let cr = creature.reproduce();
       newPop.push(cr);
-      print("BABY")
     } 
     
     if (creature.energy > 0) {
-      newPop.push(creature)
+      newPop.push(creature);
     }
   }
   population = newPop;
@@ -98,5 +97,27 @@ function mousePressed() {
 function mouseWheel(e) {
   view.zoom += e.delta / 1000;
   
-  print(e.delta);
+  // print(e.delta);
 }
+
+// function setup() {
+//   noCanvas();
+
+//   let creature = new Creature(0,0);
+//   creature.brain.addConnection();
+//   print(creature.brain);
+
+//   print(creature.brain.feedforward([0,1,0,1,1,0,1]));
+
+//   let offspring = creature.reproduce();
+//   print(offspring.brain);
+//   print(offspring.brain.feedforward([1,0,0,1,1,0,1]));
+
+//   creature.brain.addNode();
+//   print(creature.brain);
+//   print(creature.brain.feedforward([1,0,0,1,1,0,1]));
+
+//   offspring = creature.reproduce();
+//   print(offspring.brain);
+//   print(offspring.brain.feedforward([1,0,0,1,1,0,1]));
+// }

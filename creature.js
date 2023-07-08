@@ -7,18 +7,20 @@ class Creature {
     this.gen = gen;
     this.parent = parent;
     
-    this.brain = (nn) ? nn.copy() : new NeuralNetwork(7, 2, ["posx", "posy", "velx", "vely", "distToFood", "energy", "pheremone", "bias"], ["movex", "movey"]);
+    this.brain = (nn) ? nn.clone() : new NeuralNetwork(7, 2, ["posx", "posy", "velx", "vely", "distToFood", "energy", "pheremone", "bias"], ["movex", "movey"]);
     
     this.r = 8;
     this.maxVel = 4;
     
     this.energy = 4;
     
-    this.brain.mutate();
+    // this.brain.mutate();
   }
   
   reproduce() {
-    return new Creature(this.pos.x, this.pos.y, this.brain, this.gen + 1, this);
+    let child = new Creature(this.pos.x, this.pos.y, this.brain, this.gen + 1, this);
+    child.vel = this.vel.copy();
+    return child;
   }
   
   show() {  

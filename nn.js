@@ -1,214 +1,261 @@
-
-class Neuron {
-  constructor(id, label = "") {
+class Node {
+  constructor(id, layer, label = "") {
+    this.id          = id;
+    this.layer       = layer;
+    this.label       = label;
+    this.output      = 0;
+    this.inputs      = [];
     this.connections = [];
-    this.label = label;
-    this.output = 0;
-    this.id = id;
+  }
 
+  clearConnections() {
+    this.connections = [];
+  }
+
+  clean() {
     this.inputs = [];
+    this.output = 0;
   }
 
-  addInputs(num) {
-    this.inputs.push(num);
-  }
-
-  feedforward() {
-    for (let i = 0; i < this.inputs.length; i++) { 
+  engage() {
+    for (let i = 0; i < this.inputs.length; i++) {
       this.output += this.inputs[i];
     }
 
-    this.output = Math.tanh(this.output);
+    if (this.layer != 0) {
+      this.output = Math.tanh(this.output);
+    }
 
     for (let i of this.connections) {
-      i.feedforward();
+      i.propogate();
     }
   }
 
-  copy() {
-    let neuron = new Neuron(this.id, this.label);
-    // for (let i = 0; i < this.connections.length; i++) {
-    //   neuron.connections[i] = this.connections[i].copy();
-    //   print(neuron.connections[i]);
-    // }
-    return neuron;
+  addInput(input) {
+    this.inputs.push(input);
+  }
+
+  addConnection(connection) {
+    this.connections.push(connection);
+  }
+
+  clone() {
+    return new Node(this.id, this.layer, this.label);
   }
 }
 
 class Connection {
-  constructor(a, b, inNeuron, outNeuron, weight) {
-    this.a = a;
-    this.b = b;
-    this.inNeuron = inNeuron;
-    this.outNeuron = outNeuron;
+  constructor(n_in, n_out, weight) {
+    this.in     = n_in;
+    this.out    = n_out;
+    this.a      = n_in.id;
+    this.b      = n_out.id;
     this.weight = weight;
   }
 
-  copy(inNeur, outNeur) {
-    return new Connection(inNeur.id, outNeur.id, inNeur, outNeur, this.weight);
+  propogate() {
+    this.out.addInput(this.in.output * this.weight);
   }
-
-
-  feedforward() {
-    this.outNeuron.addInputs(this.inNeuron.output * this.weight);
-  }
-
 
   disable() {
     this.weight *= 0;
   }
-}
 
- 
+  clone(a, b) {
+    return new Connection(a, b, this.weight);
+  }
+
+  mutateWeight() {
+    this.weight += random(-0.05, 0.05);
+  }
+}
 
 class NeuralNetwork {
   constructor(numI, numO, labelsI = [], labelsO = []) {
-    this.inputs = [];  // Merge these
-    this.outputs = []; // Merge these
-    this.conns = [];
-
-    this.index = numI;
-
-    this.labels = [labelsI, labelsO];
+    this.nodes       = [];
+    this.connections = [];
+    this.labels      = [labelsI, labelsO];  
+    this.nextNodeId = 0;
 
     for (let i = 0; i < numI; i++) {
-      this.inputs.push(new Neuron(-i-1, labelsI[i]));
+      this.nodes.push(new Node(this.nextNodeId, 0));
+      this.nextNodeId++;
     }
 
     for (let i = 0; i < numO; i++) {
-      this.outputs.push(new Neuron(Number.MAX_SAFE_INTEGER - i, labelsO[i]));
-    }
-
-    this.neurons = [...this.inputs, ...this.outputs];
-  }
-
-  connect() {
-    for (let i = 0; i < this.neurons.length; i++) { 
-      this.neurons[i].conns = [];
-    }
-
-    for (let i = 0; i < this.conns.length; i++) { 
-      this.conns[i].inNeuron.conns.push(this.conns[i]);
+      this.nodes.push(new Node(this.nextNodeId, Number.POSITIVE_INFINITY));
+      this.nextNodeId++;
     }
   }
 
-  get(id) {
-    for (let i = 0; i < this.neurons.length; i++) {
-      if (this.neurons[i].id == id) return this.neurons[i];
+  sort() {
+    let layers = [];
+    let newNodes = [];
+
+    for (let i = 0; i < this.nodes.length; i++) {
+      let unique = true;
+      for (let j = 0; j < layers.length; j++) {
+        if (this.nodes[i].layer == layers[j][0].layer) {
+          layers[j].push(this.nodes[i]);
+          unique = false;
+          break;
+        }
+      }
+      if (unique) {
+        layers.push([ this.nodes[i] ]);
+      }
     }
-    return -1;
+
+    layers.sort((a, b) => a[0].layer - b[0].layer);
+
+    for (let i = 0; i < layers.length; i++) {
+      for (let j = 0; j < layers[i].length; j++) {
+        newNodes.push(layers[i][j]);
+      }
+    }
+
+    this.nodes = [...newNodes];
   }
 
-  copy() {
-    let nn = new NeuralNetwork(this.inputs.length, this.outputs.length, this.labels[0], this.labels[1]);
+  clone() {
+    let newNet = new NeuralNetwork(-1, -1, this.labels[0], this.labels[1]);
 
-    for (let i = 0; i < this.neurons.length; i++) {
-      nn.neurons[i] = this.neurons[i].copy();
+    for (let i = 0; i < this.nodes.length; i++) {
+      newNet.nodes[i] = this.nodes[i].clone();
     }
 
-    for (let i = 0; i < this.conns.length; i++) {
-      nn.conns[i] = this.conns[i].copy(nn.get(this.conns[i].a), nn.get(this.conns[i].b))
+    for (let i = 0; i < this.connections.length; i++) {
+      print(this.connections[i].clone(newNet.getNodeById(this.connections[i].a), newNet.getNodeById(this.connections[i].b)));
+      newNet.connections[i] = this.connections[i].clone(newNet.getNodeById(this.connections[i].a), newNet.getNodeById(this.connections[i].b));
     }
 
-    nn.connect();
-    return nn;
+    newNet.connect();
+
+    newNet.nextNodeId = this.nextNodeId;
+
+    return newNet;
   }
 
-  invalidNeurons(n1, n2) {
-    return (n1.id >= n2.id);
+  feedforward(inputs) {
+    this.sort();
+
+    let outputs = [];
+
+    for (let i of this.nodes) {
+      if (i.layer == 0) {
+        i.addInput(inputs[i.id]);
+      }
+      i.engage();
+      if (i.layer == Number.POSITIVE_INFINITY) {
+        outputs.push(i.output);
+      }
+    }
+
+    for (let i of this.nodes) {
+      i.clean();
+      print(i.output);
+    }
+
+    return [...outputs];
   }
 
   mutate() {
-    if (this.conns.length == 0) {
+    if (this.connections.length == 0) {
       this.addConnection();
+      return;
     }
 
-    if (random(1) < 0.8) {
+    if (random(1) <= 0.8) {
       this.changeWeight();
     }
 
-    if (random(1) < 0.05) {
+    if (random(1) <= 0.05) {
       this.addConnection();
     }
 
-    if (random(1) < 0.01) {
-      this.splitConnection();
+    if (random(1) <= 0.01) {
+      this.addNode();
     }
+  }
+
+  randomNodesAreInvalid(a, b) {
+    return (a.layer >= b.layer);
+  }
+
+  randomConnectionIsInvalid(connection) {
+    return (connection.weight == 0);
+  }
+
+  addConnection() {
+    let a = random(this.nodes);
+    let b = random(this.nodes);
+
+    while (this.randomNodesAreInvalid(a, b)) {
+      a = random(this.nodes);
+      b = random(this.nodes);
+    }
+
+    let connection = new Connection(a, b, random(-1, 1));
+
+    this.connections.push(connection);
+
+    a.addConnection(connection);
+  }
+
+  addNode() {
+    let connection = random(this.connections);
+
+    while (this.randomConnectionIsInvalid(connection)) {
+      connection = random(this.connections);
+    }
+
+    let newNode = new Node(this.nextNodeId, connection.in.layer+1);
+    this.nextNodeId++;
+
+    let aToNew = new Connection(connection.in, newNode       , connection.weight);
+    let newToB = new Connection(newNode      , connection.out, connection.weight);
+
+    this.nodes      .push(newNode);
+    this.connections.push(aToNew, newToB);
+
+    connection.disable();
+    this.connect();
   }
 
   changeWeight() {
-    let conn = random(this.conns);
-
-    if (random(1) < 0.05) {
-      conn.weight = random(-1, 1);
-    } else {
-      conn.weight += random(-0.05, 0.05);
+    for (let i of this.connections) {
+      i.mutateWeight();
     }
   }
 
-
-  addConnection() {
-    let neuron1;
-    let neuron2;
-
-    do {
-      neuron1 = random(this.neurons);
-      neuron2 = random(this.neurons);
-    } while (this.invalidNeurons(neuron1, neuron2));
-
-    let conn = new Connection(neuron1.id, neuron2.id, neuron1, neuron2, random(-1, 1));
-
-    neuron1.connections.push(conn);
-    this.conns.push(conn);
+  getNodeById(id) {
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i].id == id) {
+        return this.nodes[i];
+      }
+    }
   }
 
-  splitConnection() {
-    let index = floor(random(this.conns.length));
-    let conn = this.conns[index];
+  getNodesByLayer(layer) {
+    let gotten = [];
 
-    conn.disable();
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i].layer == layer) {
+        gotten.push(this.nodes[i]);
+      }
+    }
 
-    let newNeuron = new Neuron(this.index);
-    let aToNew = new Connection(conn.a.id, newNeuron.id, conn.a, newNeuron, conn.weight);
-    let newToB = new Connection(newNeuron.id, conn.b.id, conn.b, newNeuron, conn.weight);
-
-    conn.inNeuron.connections.push(aToNew);
-    newNeuron.connections.push(newToB);
-
-    this.neurons.splice(this.index, 0, newNeuron);
-
-    this.conns.push(aToNew, newToB);
-
-    this.index++;
+    return [...gotten];
   }
 
+  connect() {
 
-  feedforward(inputs, yes = false) {
-    for (let i = 0; i < this.inputs.length; i++) {
-      this.inputs[i].addInputs(inputs[i]);
-      this.inputs[i].feedforward();
-
-      // if (yes)
-      //   print(this.inputs[i].connections);
+    for (let i of this.nodes) {
+      i.clearConnections();
     }
 
-    for (let i = this.inputs.length; i < this.neurons.length; i++) {
-      this.neurons[i].feedforward();
+    for (let i = 0; i < this.connections.length; i++) { 
+      this.connections[i].in.addConnection(this.connections[i]);
     }
-
-    let out = [];
-
-    for (let i of this.outputs) {
-      i.feedforward();
-      out.push(i.output);
-    }
-
-    for(let i of this.neurons) {
-      i.inputs = [];
-    }
-
-    return [...out];
-
   }
-
 }
