@@ -70,7 +70,17 @@ function draw() {
   }
 
   if (newPop.length == 0) {
-    print(`EXODUS EVENT OCCURED`);
+    let record = -1;
+    let creature = null;
+
+    for (let i of population) {
+      if (i.score > record) {
+        record = i.score;
+        creature = i;
+      }
+    }
+
+    print(`EXODUS EVENT OCCURED: Best Creature ${creature} with a score of ${record}`);
     for (let i = 0; i < 100; i++) {
       newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     }

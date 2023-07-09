@@ -9,6 +9,7 @@ class Creature {
     this.r      = 8;
     this.maxVel = 4;
     this.energy = 4;
+    this.score  = 0;
     
     this.brain.mutate();
   }
@@ -16,6 +17,7 @@ class Creature {
   reproduce() {
     let child = new Creature(this.pos.x, this.pos.y, this.brain, this.gen + 1, this);
     child.vel = this.vel.copy();
+    child.score = this.score + 4;
     return child;
   }
   
@@ -46,7 +48,9 @@ class Creature {
       
       if (dst < this.r + 7) {
         i.set(random(width), random(height));
-        this.energy += random(2, 2.5);
+        const energyGained = random(2, 2.5);
+        this.energy += energyGained;
+        this.score  += energyGained;
         continue;
       }
       
