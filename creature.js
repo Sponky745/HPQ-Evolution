@@ -5,7 +5,7 @@ class Creature {
     this.acc    = createVector();
     this.gen    = gen;
     this.parent = parent;
-    this.brain  = (nn) ? nn.clone() : new NeuralNetwork(8, 3, ["posx", "posy", "velx", "vely", "angle", "distToFood", "energy", "pheremone", "bias"], ["turnleft", "turnright", "forward"]);
+    this.brain  = (nn) ? nn.clone() : new NeuralNetwork(9, 4, ["posx", "posy", "velx", "vely", "angle", "distToFood", "distToNeighbour", "energy", "pheremone", "bias"], ["turnleft", "turnright", "forward", "layDownPheremone"]);
     this.r      = 8;
     this.maxVel = 4;
     this.energy = 4;
@@ -57,29 +57,49 @@ class Creature {
       if (dst < distance) 
         distance = dst;
     }
+
+    let dstToClosestNeighbour = dist(0, 0, width, height);
+    
+    for (let i of population) {
+      const dst = p5.Vector.dist(this.pos, i.pos);
+      
+      if (dst < dstToClosestNeighbour) 
+        dstToClosestNeighbour = dst;
+    }
+
+    let recordStrength = -1;
+
+    for (let i of pheremones) {
+      recordStrength = max(i.strength, recordStrength);
+    }
   
     this.acc.set(0, 0);
     
-    let force = this.brain.feedforward([
+    let outputs = this.brain.feedforward([
       this.pos.x / width, this.pos.y / height, // position
       this.vel.x / this.maxVel, this.vel.y / this.maxVel, // velocity
       this.vel.heading() / TWO_PI, // angle
       distance / maxDst, // distance to nearest food pellet
+      dstToClosestNeighbour / maxDst, // distance to nearest creature
       this.energy / 8, // energy
-      0, // TODO: Pheremone
+      recordStrength, // pheremone
       1 // bias
     ]);
     
-    this.acc = p5.Vector.fromAngle(this.vel.heading() - force[0] + force[1]).mult(force[2]);
+    this.acc = p5.Vector.fromAngle(this.vel.heading() - outputs[0] + outputs[1]).mult(outputs[2]);
     
     this.vel.add(this.acc);
     this.pos.add(this.vel);
 
-    this.vel.rotate(force[1] - force[0]);
+    this.vel.rotate(outputs[1] - outputs[0]);
     
     this.vel.limit(this.maxVel);
     this.show();
     this.edges();
+
+    if (outputs[3] >= 0.5) {
+      pheremones.push(new PheremoneParticle(this.pos.x, this.pos.y, this));
+    }
     
     
     this.energy -= 0.005;

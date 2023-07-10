@@ -1,24 +1,20 @@
 let population = [];
-let food = [];
-
+let pheremones = [];
+let food       = [];
 let prevMousePos;
 let clickedLastFrame = false;
-
 let view = {
-  
   offset: {
     x: 0,
     y: 0,
   },
   zoom: 0.25,
 };
-
 let modes = {
   select: "SELECT",
   draw:   "DRAW"  ,
   pan:    "PAN"   ,
 };
-
 let mode = modes.pan;
 
 function setup() {
@@ -92,6 +88,18 @@ function draw() {
     fill(0, 255, 0);
     circle(i.x, i.y, 14);
   }
+
+  let newPheremones = [];
+  for (let i of pheremones) {
+    i.update();
+
+    if (i.strength >= 0.01) {
+      newPheremones.push(i);
+    }
+  }
+
+  pheremones = [...newPheremones];
+
   // pop();
   
   
