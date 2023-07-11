@@ -1,5 +1,5 @@
 let population = [];
-let pheremones = [];
+let pheromones = [];
 let food       = [];
 let prevMousePos;
 let clickedLastFrame = false;
@@ -89,16 +89,16 @@ function draw() {
     circle(i.x, i.y, 14);
   }
 
-  let newPheremones = [];
-  for (let i of pheremones) {
+  let newpheromones = [];
+  for (let i of pheromones) {
     i.update();
 
     if (i.strength >= 0.01) {
-      newPheremones.push(i);
+      newpheromones.push(i);
     }
   }
 
-  pheremones = [...newPheremones];
+  pheromones = [...newpheromones];
 
   // pop();
   

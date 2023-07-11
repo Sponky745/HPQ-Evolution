@@ -5,7 +5,7 @@ class Creature {
     this.acc    = createVector();
     this.gen    = gen;
     this.parent = parent;
-    this.brain  = (nn) ? nn.clone() : new NeuralNetwork(9, 4, ["posx", "posy", "velx", "vely", "angle", "distToFood", "distToNeighbour", "energy", "pheremone", "bias"], ["turnleft", "turnright", "forward", "layDownPheremone"]);
+    this.brain  = (nn) ? nn.clone() : new NeuralNetwork(9, 4, ["posx", "posy", "velx", "vely", "angle", "distToFood", "distToNeighbour", "energy", "pheromone", "bias"], ["turnleft", "turnright", "forward", "layDownPheromone"]);
     this.r      = 8;
     this.maxVel = 4;
     this.energy = 4;
@@ -69,8 +69,11 @@ class Creature {
 
     let recordStrength = -1;
 
-    for (let i of pheremones) {
-      recordStrength = max(i.strength, recordStrength);
+    for (let i of pheromones) {
+
+      if (p5.Vector.dist(this.pos, i.pos) < this.r + i.r) {
+        recordStrength = max(i.strength, recordStrength);
+      }
     }
   
     this.acc.set(0, 0);
@@ -82,7 +85,7 @@ class Creature {
       distance / maxDst, // distance to nearest food pellet
       dstToClosestNeighbour / maxDst, // distance to nearest creature
       this.energy / 8, // energy
-      recordStrength, // pheremone
+      recordStrength, // the strength of the pheromone (if any) that the creature is on
       1 // bias
     ]);
     
@@ -98,7 +101,7 @@ class Creature {
     this.edges();
 
     if (outputs[3] >= 0.5) {
-      pheremones.push(new PheremoneParticle(this.pos.x, this.pos.y, this));
+      pheremones.push(new PheromoneParticle(this.pos.x, this.pos.y, this));
     }
     
     
