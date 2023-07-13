@@ -39,7 +39,7 @@ function setup() {
 
 function draw() {
   // push();
-  background(204, 0, 0);
+  background(104, 0, 0);
   translate(width/2 + view.offset.x, height/2 + view.offset.y);
   scale(view.zoom);
   
