@@ -79,7 +79,7 @@ function draw() {
     print(`EXODUS EVENT OCCURED: Best Creature had score of ${record}`);
     print(creature);
 
-    newPop.push(creature.copy());
+    newPop.push(creature.reproduce());
 
     for (let i = 0; i < 99; i++) {
       newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));

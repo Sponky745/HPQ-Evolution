@@ -120,8 +120,8 @@ class Creature {
       this.sendSignal(outputs[4]);
     }
     
-    this.signalStrength = max(0, this.strength - 0.025);
-    this.energy        -=  int(this.immortal) * 0.005;
+    this.signalStrength = max(0, this.signalStrength - 0.025);
+    this.energy        -= int(!this.immortal) * 0.005;
   }
 
   sendSignal(strength) {
