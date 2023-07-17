@@ -13,5 +13,7 @@ class PheromoneParticle {
 
   update() {
     this.strength -= 0.005;
+
+    // this.show();
   }
 }

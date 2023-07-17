@@ -39,7 +39,7 @@ function setup() {
 
 function draw() {
   // push();
-  background(104, 0, 0);
+  background(255,0,0);
   translate(width/2 + view.offset.x, height/2 + view.offset.y);
   scale(view.zoom);
   
@@ -76,7 +76,8 @@ function draw() {
       }
     }
 
-    print(`EXODUS EVENT OCCURED: Best Creature ${creature} with a score of ${record}`);
+    print(`EXODUS EVENT OCCURED: Best Creature had score of ${record}`);
+    print(creature);
     for (let i = 0; i < 100; i++) {
       newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     }
@@ -92,6 +93,7 @@ function draw() {
   let newpheromones = [];
   for (let i of pheromones) {
     i.update();
+    i.show();
 
     if (i.strength >= 0.01) {
       newpheromones.push(i);
@@ -151,6 +153,19 @@ function mouseWheel(e) {
   view.zoom += e.delta / 1000;
   
   // print(e.delta);
+}
+
+function best() {
+  let record = -1;
+  let bestCreature = null;
+  for (let i of creatures) {
+    if (i.score < record) {
+      record = i.score;
+      bestCreature = i;
+    }
+  }
+
+  print(bestCreature);
 }
 
 // function setup() {
