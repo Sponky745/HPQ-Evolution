@@ -161,7 +161,7 @@ function mouseWheel(e) {
 function best() {
   let record = -1;
   let bestCreature = null;
-  for (let i of creatures) {
+  for (let i of population) {
     if (i.score < record) {
       record = i.score;
       bestCreature = i;
