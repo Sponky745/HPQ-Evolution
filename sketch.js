@@ -65,7 +65,7 @@ function draw() {
     }
   }
 
-  if (newPop.length == 0) {
+  if (newPop.every(creature => creature.immortal)) {
     let record = -1;
     let creature = null;
 
@@ -84,6 +84,8 @@ function draw() {
     for (let i = 0; i < 99; i++) {
       newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     }
+
+    newPop[0].immortal = true;
   }
 
   population = newPop;

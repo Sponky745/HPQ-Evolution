@@ -11,13 +11,15 @@ class Creature {
     this.energy         = 4;
     this.score          = 0;
     this.signalStrength = 0;
+    this.immortal       = false;
     
     this.brain.mutate();
   }
   
   reproduce() {
     let child = new Creature(this.pos.x, this.pos.y, this.brain, this.gen + 1, this);
-    child.score = this.score + 4;
+    child.score = this.score;
+    this.score += 4;
     return child;
   }
   
@@ -118,8 +120,8 @@ class Creature {
       this.sendSignal(outputs[4]);
     }
     
-    this.strength = max(0, this.strength - 0.025);
-    this.energy -= 0.005;
+    this.signalStrength = max(0, this.strength - 0.025);
+    this.energy        -=  int(this.immortal) * 0.005;
   }
 
   sendSignal(strength) {
