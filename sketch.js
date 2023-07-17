@@ -34,7 +34,7 @@ function setup() {
   
   prevMousePos = createVector(mouseX, mouseY);
 
-  console.log("Version: 1.3");
+  console.log("Version: 1.5");
 }
 
 function draw() {
@@ -57,7 +57,7 @@ function draw() {
       creature.energy *= 0;
       let cr = creature.reproduce();
       newPop.push(cr);
-      print(cr);
+      // print(cr);
     } 
     
     if (creature.energy > 0) {
@@ -78,7 +78,10 @@ function draw() {
 
     print(`EXODUS EVENT OCCURED: Best Creature had score of ${record}`);
     print(creature);
-    for (let i = 0; i < 100; i++) {
+
+    newPop.push(creature.copy());
+
+    for (let i = 0; i < 99; i++) {
       newPop.push(new Creature(random(-width/2 * 6, width/2 * 6), random(-height/2 * 6, height/2 * 6)));
     }
   }

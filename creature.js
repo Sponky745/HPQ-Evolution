@@ -1,7 +1,7 @@
 class Creature {
   constructor(x, y, nn = null, gen = 0, parent = null) {
-    this.vel    = p5.Vector.random2D().mult(0.0001);
-    this.acc    = createVector();
+    this.pos            = createVector(x, y);
+    this.vel            = p5.Vector.random2D().setMag(0.0001);
     this.acc            = createVector();
     this.gen            = gen;
     this.parent         = parent;
@@ -9,22 +9,20 @@ class Creature {
     this.r              = 8;
     this.maxVel         = 4;
     this.energy         = 4;
+    this.score          = 0;
+    this.signalStrength = 0;
     
     this.brain.mutate();
   }
   
   reproduce() {
     let child = new Creature(this.pos.x, this.pos.y, this.brain, this.gen + 1, this);
-    child.vel = this.vel.copy();
     child.score = this.score + 4;
     return child;
   }
   
   show() {  
-    fill(0, 255, 0);
-    if (this.gen == 0) {
-      fill(255);
-    }
+    fill(255)
     push();
     translate(this.pos.x, this.pos.y);
     rotate(this.vel.heading() + HALF_PI);
@@ -61,6 +59,7 @@ class Creature {
     }
 
     let dstToClosestNeighbour = dist(0, 0, width, height);
+    let closestCreature = null;
     
     for (let i of population) {
       const dst = p5.Vector.dist(this.pos, i.pos);
