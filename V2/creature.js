@@ -7,12 +7,14 @@ class Creature {
     this.numO        = 0;
     this.nextVertice = 0;
     this.nextEdge    = 0;
+    this.energy      = 4;
+    this.dir         = createVector();
 
     for (let i = 0; i < Creature.STARTING_SIZE; i++) {
       this.vertices.push(new Vertex(this.nextVertice, 
         random(-25, 25) + this.pos.x,
         random(-25, 25) + this.pos.y,
-        (i <= 1) ? -1 : (i == Creature.STARTING_SIZE-3)  ? i : Number.MAX_SAFE_INTEGER
+        (i == 0) ? -1 : (i != Creature.STARTING_SIZE-1) ? i : Number.MAX_SAFE_INTEGER
       ));
 
       if (this.vertices[this.vertices.length-1].layer == -1) {
@@ -24,24 +26,6 @@ class Creature {
 
       this.nextVertice++;
     }
-
-    // this.vertices.push(new Vertex(this.nextVertice, 
-    //   random(-75, 75) + this.pos.x,
-    //   random(-75, 75) + this.pos.y,
-    //   -1
-    // ));
-
-    // this.numI++;
-    // this.nextVertice++;
-
-    // this.vertices.push(new Vertex(this.nextVertice, 
-    //   random(-75, 75) + this.pos.x,
-    //   random(-75, 75) + this.pos.y,
-    //   Number.MAX_SAFE_INTEGER,
-    // ));
-
-    // this.numO++;
-    // this.nextVertice++;
 
     for (let i = 0; i < this.vertices.length; i++) {
       for (let j = i+1; j < this.vertices.length; j++) {
@@ -137,15 +121,31 @@ class Creature {
   }
 
   update(frameRule) {
-
     if (frameCount % frameRule == 0) {
       this.sort();
 
+      let vel = createVector();
+
       for (let i of this.vertices) {
         i.clear();
+        vel.add(i.vel);
       }
+
+      vel.div(this.vertices.length);
+
+      // print(vel.mag());
+
       for (let i = 0; i < this.numI; i++) {
-        this.vertices[i].getInput();
+        switch (i.inputFunc) {
+          case "dir":
+            this.vertices[i].getInput(     vel.x,      vel.y);
+            break;
+          case "vel":
+            this.vertices[i].getInput(     vel.mag()        );
+          default:
+            this.vertices[i].getInput(this.pos.x, this.pos.y);
+            break;
+        }
       }
 
       for (let i of this.vertices) {
@@ -162,13 +162,25 @@ class Creature {
     }
 
     let sum = createVector();
+    this.dir.mult(0);
 
     for (let i of this.vertices) {
       i.update();
       sum.add(i.pos);
+      this.dir.add(i.vel.heading());
+
+      for (let j of food) {
+        if (p5.Vector.dist(i.pos, j) <= i.r + 2) {
+          this.energy += random(-0.5, 2);
+          j.set(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
+        }
+      }
     }
 
+    this.dir.div(this.vertices.length);
+
     this.pos = p5.Vector.div(sum, this.vertices.length);
+    this.energy -= 0.0025;
   }
 
   osfa(frameRule) {
@@ -179,7 +191,7 @@ class Creature {
 
   edgeAlreadyExists(a, b) {
     for (let i of this.edges) {
-      if (i.a == a.id && i.b == b.id && i.weight != 0) {
+      if (i.a == a.id && i.b == b.id && i.weight != 0 && i.a == b.id && i.b == a.id) {
         return true;
       }
     }
@@ -276,7 +288,7 @@ class Creature {
   }
 
   addTarget() {
-    let output = this.vertices[random(this.vertices.length-this.numO-1, this.vertices.length)];
+    let output = this.vertices[floor(random(this.vertices.length-this.numO-1, this.vertices.length))];
     let edge;
 
     let maxIterations = 150;
@@ -292,9 +304,47 @@ class Creature {
     }
   }
 
+  removeTarget() {
+    let output = this.vertices[floor(random(this.vertices.length-this.numO-1, this.vertices.length))];
+    let target = output.targets[floor(random(output.targets.length))];
+
+    output.targets.splice(target, 1);
+  }
+
   moveVert() {
     let vert = random(this.vertices);
     vert.pos.add(p5.Vector.random2D().mult(10));
+  }
+
+  changeWeight() {
+    let weight = random(this.edges);
+    if (random(1) < 0.05) {
+      weight.weight = random(0.2, 1);
+    }
+    else {
+      weight.weight += random(-0.025, 0.025);
+    }
+  }
+
+  mutate() {
+    if (random(1) < 0.8) {
+      this.changeWeight();
+    }
+    if (random(1) < 0.4) {
+      this.moveVert();
+    }
+    if (random(1) < 0.3) {
+      this.addEdge();
+    }
+    if (random(1) < 0.15) {
+      this.addVert();    
+    }
+    if (random(1) < 0.2) {
+      this.addTarget();
+    }
+    else if (random(1) < 0.6) {
+      this.removeTarget();
+    }
   }
 }
 Creature.STARTING_SIZE = 5;

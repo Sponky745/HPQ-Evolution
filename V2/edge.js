@@ -6,7 +6,7 @@ class Edge {
     this.a                  = a.id;
     this.b                  = b.id;
     this.restLength         = max(20, p5.Vector.dist(this.in.pos, this.out.pos));
-    this.originalRestLength = this.restLength;
+    this.originalRestLength = max(20, p5.Vector.dist(this.in.pos, this.out.pos));
     this.id                 = id;
   }
 
@@ -31,7 +31,7 @@ class Edge {
     let forceA = p5.Vector.sub(this.in.pos, this.out.pos);
     forceA.normalize();
     forceA.mult(-this.weight/2 * x);
-    // forceA.div(2);
+    forceA.div(2);
 
     let forceB = p5.Vector.mult(forceA, -1);
 

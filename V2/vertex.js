@@ -38,11 +38,11 @@ class Vertex {
     }
   }
 
-  activate() {
+  activate() { // BUG: Infinitely expanding creatures
     // if (frameCount % 30 != 0) return;
-    for (let i of this.targets) {
-      i.restLength = i.originalRestLength * this.output;
-    }
+      for (let i of this.targets) {
+        i.restLength = i.originalRestLength * this.output * 1.5;
+      }
   }
 
   clear() {
@@ -70,8 +70,11 @@ class Vertex {
   }
 
   getInput(x, y) {
-    // this.inputs.push(Vertex.inputsToFunc[this.inputFunc]);
-    this.inputs.push(random(1));
+    this.inputs.push(Vertex.inputsToFunc[this.inputFunc](x, y));
+    // this.inputs.push(random(1));
+    if (this.inputs[this.inputs.length-1] > 1) {
+      print(this.inputFunc);
+    }
   }
   
   show() {
@@ -111,8 +114,6 @@ class Vertex {
   }
 }
 
-//TODO: INPUTS TO FUNC
-
 Vertex.inputs = [
   "distToNearestCreature",
   "angleToNearestCreature",
@@ -120,8 +121,7 @@ Vertex.inputs = [
   "angleToNearestFood",
   "posx",
   "posy",
-  "velx",
-  "vely",
+  "vel" ,
   "dir" ,
 ];
 
@@ -156,7 +156,7 @@ Vertex.inputsToFunc = {
     let pos      = createVector(x, y);
     let otherPos = creature.pos.copy().sub(pos).normalize();
 
-    return otherPos.angleBetween(createVector(0, -1));
+    return otherPos.angleBetween(createVector(0, -1)) / TWO_PI;
   },
   distToNearestFood: (x, y) => {
     let record = Infinity;
@@ -170,8 +170,8 @@ Vertex.inputsToFunc = {
     return record / dist(0, 0, width, height);
   },
   angleToNearestFood: (x, y) => {
-    let food     = null;
-    let record   = Infinity;
+    let nearest     = null;
+    let record      = Infinity;
 
     for (let i of food) {
       let dst = dist(x, y, i.x, i.y);
@@ -179,29 +179,28 @@ Vertex.inputsToFunc = {
       if (dst == 0) continue;
 
       if (dst < record) {
-        food   = i;
-        record = dst;
+        nearest = i;
+        record  = dst;
       }
     }
 
 
     let pos      = createVector(x, y);
-    let otherPos = food.copy().sub(pos).normalize();
+    let otherPos = nearest.copy().sub(pos).normalize();
 
-    return otherPos.angleBetween(createVector(0, -1));
+    return otherPos.angleBetween(createVector(0, -1)) / TWO_PI;
   },
-  posx: (x, y) => x,
-  posy: (x, y) => y,
-  velx: (x, y) => x,
-  vely: (x, y) => y,
-  dir : (x, y) => createVector(x, y).heading(),
+  posx: (x, _) => x / worldWidth,
+  posy: (_, y) => y / worldHeight,
+  vel : (x, _) => x,
+  dir : (x, y) => createVector(x, y).heading() / TWO_PI,
 };
 
 Vertex.activationFuncs = [
-  (x) => Math.tanh(x),
-  (x) => Math.sin(x),
-  (x) => Math.cos(x),
+  (x) => Math.sin(x)**2,
+  (x) => Math.cos(x)**2,
   (x) => Math.max(x, 0),
+  (x) => Math.min(x, 0),
   (x) => Math.min(max(x, 0)),
   (x) => Math.exp(x*x),
   (x) => 1 / (1 + Math.exp(-x)),
