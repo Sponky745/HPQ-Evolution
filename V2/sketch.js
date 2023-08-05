@@ -30,7 +30,7 @@ function setup() {
 
   view.offset = createVector(width/2, height/2);
 
-  console.log("Version 2.2.3");
+  console.log("Version 2.3.2");
 }
 
 function draw() {
@@ -72,26 +72,22 @@ function draw() {
 
   }
 
+  if (newCreatures.length == 0) {
+    for (let i = 0; i < initialSize; i++) {
+      newCreatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+    }
+
+    food = [];
+
+    for (let i = 0; i < initialSize * 15; i++) {
+      food.push(createVector(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+    }
+
+    print("Mass Extinction")
+    print(best());
+  }
+
   creatures = [...newCreatures];
-
-  
-  // if (mouseIsPressed) {
-  //   if (!clickedLastFrame) {
-  //     clickedLastFrame = true;
-  //   } else {
-  //     view.offset.add(createVector(mouseX, mouseY).sub(prevMousePos));
-  //   } 
-  // }
-
-  // if (keyIsDown) {
-  //   switch(keyCode) {
-  //     case LEFT_ARROW:
-  //       view.zoom -= 0.0025;
-  //       break;
-  //     case RIGHT_ARROW:
-  //       view.zoom += 0.0025;
-  //   }
-  // }
 
   prevMousePos = createVector(mouseX, mouseY);
 }
@@ -120,4 +116,18 @@ function keyReleased() {
 
 function screenToWorld(x, y) {
   return createVector(x - view.offset.x, y - view.offset.y).div(view.zoom);
+}
+
+function best() {
+  let record = -1;
+  let creature = null;
+
+  for (let i of creatures) {
+    if (i.score > record) {
+      record = i.score;
+      creature = i;
+    }
+  }
+
+  return [creature, record]; 
 }

@@ -192,7 +192,7 @@ Vertex.inputsToFunc = {
   },
   posx: (x, _) => x / worldWidth,
   posy: (_, y) => y / worldHeight,
-  vel : (x, _) => x,
+  vel : (x, _) => min(x, 1),
   dir : (x, y) => createVector(x, y).heading() / TWO_PI,
 };
 
