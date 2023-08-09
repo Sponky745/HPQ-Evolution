@@ -9,6 +9,9 @@ class Creature {
     this.nextEdge    = 0;
     this.energy      = 4;
     this.dir         = createVector();
+    this.score       = 0;
+    this.child       = null;
+    this.fitness     = 0;
 
     for (let i = 0; i < Creature.STARTING_SIZE; i++) {
       this.vertices.push(new Vertex(this.nextVertice, 
@@ -45,7 +48,11 @@ class Creature {
 
     for (let i = this.vertices.length-this.numO; i < this.vertices.length; i++) {
       let vert = this.getVertexById(i);
-      vert.targets.push(random(this.edges));
+      if (random(1) < 0.8) {
+        vert.targets.push(random(this.edges));
+      } else {
+        vert.targets.push(random(this.vertices));
+      }
       // vert.targets.push(random(this.edges));
     }
   }
@@ -179,8 +186,9 @@ class Creature {
 
     this.dir.div(this.vertices.length);
 
-    this.pos = p5.Vector.div(sum, this.vertices.length);
-    this.energy -= 0.0025;
+    this.pos     = p5.Vector.div(sum, this.vertices.length);
+    this.energy -= 0.005;
+    this.score  += 0.025;
   }
 
   osfa(frameRule) {
@@ -217,7 +225,12 @@ class Creature {
 
     for (let i = 0; i < newOne.vertices.length; i++) {
       for (let j = 0; j < this.vertices[i].targets.length; j++) {
-        newOne.vertices[i].targets[j] = newOne.getEdgeById(this.vertices[i].targets[j].id);
+        if (i.locked != undefined) {
+          newOne.vertices[i].targets[j] = newOne.getVertexById(this.vertices[i].targets[j].id);
+        }
+        else {
+          newOne.vertices[i].targets[j] = newOne.getEdgeById(this.vertices[i].targets[j].id);
+        }
       }
     }
 
@@ -226,27 +239,73 @@ class Creature {
     return newOne;
   }
 
+  reproduce() {
+    let offspring = this.clone();
+    
+    offspring.score = this.score;
+    this.score += 3;
+
+    offspring.mutate();
+
+    return offspring;
+  }
+
   // ------------------------------------------ MUTATION METHODS ------------------------------------------------------------------------------------------
 
   addVert() {
-    let edge = random(this.edges);
 
-    while (edge.weight == 0) {
-      edge = random(this.edges);
+    let type = random(["in", "hidden", "out"]);
+
+    switch (type) {
+      case "in" : {
+        let vert = new Vertex(this.nextVertice, random(-20, 20) + this.pos.x, random(-20, 20) + this.pos.y, -1);
+        this.nextVertice++;
+
+        let out  = this.vertices[floor(random(this.numI, this.vertices.length))];
+        let edge = new Edge (vert, out, random(0.2, 1), this.nextEdge);
+        this.nextEdge++;
+
+        this.vertices.push(vert, out);
+        this.edges   .push(edge);
+        break;
+      }
+
+      case "hidden" : {
+        let edge = random(this.edges);
+
+        while (edge.weight == 0) {
+          edge = random(this.edges);
+        }
+
+        let newVert = new Vertex(this.nextVertice, random(-20, 20) + this.pos.x, random(-20, 20) + this.pos.y, edge.in.layer+1);
+        this.nextVertice++;
+
+        let aToNew = new Edge(edge.in, newVert , edge.weight, this.nextEdge);
+        let newToB = new Edge(newVert, edge.out, edge.weight, this.nextEdge);
+
+        this.nextEdge += 2;
+
+        this.vertices.push(newVert);
+        this.edges   .push(aToNew, newToB);
+
+        edge.weight = 0;
+        break;
+      }
+
+      case "out": {
+        let vert = new Vertex(this.nextVertice, random(-20, 20) + this.pos.x, random(-20, 20) + this.pos.y, Number.MAX_SAFE_INTEGER);
+        this.nextVertice++;
+
+        let from = this.vertices[floor(random(0, this.vertices.length - this.numO))];
+        let edge = new Edge (from, vert, random(0.2, 1), this.nextEdge);
+        this.nextEdge++;
+
+        this.vertices.push(vert, from);
+        this.edges   .push(edge);
+        break;
+      }
     }
 
-    let newVert = new Vertex(this.nextVertice, random(-20, 20) + this.pos.x, random(-20, 20) + this.pos.y, edge.in.layer+1);
-    this.nextVertice++;
-
-    let aToNew = new Edge(edge.in, newVert , edge.weight, this.nextEdge);
-    let newToB = new Edge(newVert, edge.out, edge.weight, this.nextEdge);
-
-    this.nextEdge += 2;
-
-    this.vertices.push(newVert);
-    this.edges   .push(aToNew, newToB);
-
-    edge.weight = 0;
     this.connect();
   }
 
@@ -288,19 +347,39 @@ class Creature {
   }
 
   addTarget() {
+    let isEdge = !!round(random(1));
     let output = this.vertices[floor(random(this.vertices.length-this.numO-1, this.vertices.length))];
-    let edge;
 
-    let maxIterations = 150;
-    let i = 0;
 
-    do {
-      edge = random(this.edges);
-      i++;
-    } while (!output.targets.contains(edge) && i < maxIterations);
+    if (isEdge) {
+      let edge;
 
-    if (i < maxIterations) {
-      output.targets.push(edge);
+      let maxIterations = 150;
+      let i = 0;
+
+      do {
+        edge = random(this.edges);
+        i++;
+      } while (!output.targets.includes(edge) && i < maxIterations);
+
+      if (i < maxIterations) {
+        output.targets.push(edge);
+      }
+    }
+    else {
+      let vert = null;
+
+      let maxIterations = 150;
+      let i = 0;
+
+      do {
+        vert = random(this.vertices);
+        i++;
+      } while (!output.targets.includes(vert) && i < maxIterations);
+
+      if (i < maxIterations) {
+        output.targets.push(vert);
+      }
     }
   }
 
@@ -313,7 +392,7 @@ class Creature {
 
   moveVert() {
     let vert = random(this.vertices);
-    vert.pos.add(p5.Vector.random2D().mult(10));
+    vert.pos.add(p5.Vector.random2D().mult(5));
   }
 
   changeWeight() {

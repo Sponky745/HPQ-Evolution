@@ -12,6 +12,7 @@ class Vertex {
     this.activationFunc = random(Vertex.activationFuncs);
     this.inputs         = [];
     this.r              = 2;
+    this.locked         = false;
 
     if (this.layer == -1) {
       this.inputFunc = random(Vertex.inputs);
@@ -38,10 +39,15 @@ class Vertex {
     }
   }
 
-  activate() { // BUG: Infinitely expanding creatures
+  activate() {
     // if (frameCount % 30 != 0) return;
       for (let i of this.targets) {
-        i.restLength = i.originalRestLength * this.output * 1.5;
+        if (i.locked != undefined) {
+          i.locked = !!round(this.output);
+        }
+        else {
+          i.restLength = i.originalRestLength * this.output * 1.5;
+        }
       }
   }
 
@@ -81,8 +87,13 @@ class Vertex {
     strokeWeight(2);
     stroke(255, 255, 0);
     for (let i of this.targets) {
-      let mid = i.midpoint();
-      line(this.pos.x, this.pos.y, mid.x, mid.y);
+      if (i.locked != undefined) {
+        line(this.pos.x, this.pos.y, i.pos.x, i.pos.y);
+      }
+      else {
+        let mid = i.midpoint();
+        line(this.pos.x, this.pos.y, mid.x, mid.y);
+      }
     }
     strokeWeight(1);
     stroke(0);
@@ -91,6 +102,11 @@ class Vertex {
   }
 
   update() {
+    if (this.locked) {
+      this.acc.mult(0);
+      this.vel.mult(0);
+    }
+
     this.vel.add(this.acc);
     this.vel.limit(8);
     this.pos.add(this.vel);
@@ -129,17 +145,22 @@ Vertex.inputsToFunc = {
   distToNearestCreature: (x, y) => {
     let record = Infinity;
 
+    if (creatures.length == 1) return 0;
+
     for (let i of creatures) {
       let dst = dist(x, y, i.pos.x, i.pos.y);
       if (dst == 0) continue;
       record = min(record, dst);
     }
 
-    return record / dist(0, 0, width, height);
+    return record / dist(-worldWidth/2, -worldHeight/2, worldWidth/2, worldHeight/2);
+
   },
   angleToNearestCreature: (x, y) => {
     let creature = null;
     let record   = Infinity;
+
+    if (creatures.length == 1) return 0;
 
     for (let i of creatures) {
       let dst = dist(x, y, i.pos.x, i.pos.y);

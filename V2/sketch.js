@@ -1,8 +1,10 @@
-let creatures  = [];
-let food       = [];
+let creatures   = [];
+let originals   = [];
+let EVERYTHING  = [];
+let food        = [];
 let initialSize = 25;
-let frameRule  = 21;
-let view       = {
+let frameRule   = 21;
+let view        = {
   offset: -1,
   zoom: 0.25,
 };
@@ -17,12 +19,15 @@ let keyIsDown = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  worldWidth  = width  * 3;
-  worldHeight = height * 3;
+  worldWidth  = width  * 4;
+  worldHeight = height * 4;
 
   for (let i = 0; i < initialSize; i++) {
-    creatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+    creatures .push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+    EVERYTHING.push(creatures[i]);
   }
+
+  originals = [...creatures];
 
   for (let i = 0; i < initialSize * 15; i++) {
     food.push(createVector(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
@@ -30,7 +35,7 @@ function setup() {
 
   view.offset = createVector(width/2, height/2);
 
-  console.log("Version 2.3.2");
+  console.log("Version 2.7.11");
 }
 
 function draw() {
@@ -58,9 +63,9 @@ function draw() {
     let isCreatureDead = false;
 
     if (i.energy >= 8) {
-      let offspring = i.clone();
-      offspring.mutate();
+      let offspring = i.reproduce();
       newCreatures.push(offspring);
+      EVERYTHING  .push(offspring);
       i.energy /= 2;
     }
 
@@ -69,22 +74,96 @@ function draw() {
     if (!isCreatureDead) {
       newCreatures.push(i);
     }
-
   }
 
   if (newCreatures.length == 0) {
-    for (let i = 0; i < initialSize; i++) {
-      newCreatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
-    }
-
-    food = [];
+    let bestest = best()[0];
+    let food = [];
 
     for (let i = 0; i < initialSize * 15; i++) {
       food.push(createVector(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
     }
 
+    newCreatures[0] = bestest.clone();
+
+
+    let bestOfTheBloodlines = [];
+
+    for (let i of originals) {
+      let current         = i;
+      let bloodlineRecord = -1;
+      let bestCreature    = null
+
+      while (current) {
+        if (bloodlineRecord < current.score) {
+          bloodlineRecord = current.score;
+          bestCreature    = current;
+        }
+        current = i.child;
+      }
+
+      bestOfTheBloodlines.push(bestCreature);
+    }
+
+    for (let i of bestOfTheBloodlines) {
+      i.fitness = i.score / bestest.score;
+    }
+
+    let sum = 0;
+
+    for (let i of bestOfTheBloodlines) {
+      sum += i.fitness;
+    }
+
+    const selectParent = (population) => {
+      let rand = random(sum);
+
+      let selectPointer = 0;
+
+      for (let  j = 0; j < population.length; j++) {
+        selectPointer += population[j].fitness;
+        if (selectPointer > rand) {
+          return population[j];
+        }
+      }
+
+      return null;
+    };
+
+
+    for (let i = 1; i < floor(initialSize/2); i++) {
+      const parent = selectParent(bestOfTheBloodlines);
+
+      newCreatures.push(parent.reproduce());
+    }
+
+    for (let i = floor(initialSize/2); i < initialSize; i++) {
+      newCreatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+    }
+
     print("Mass Extinction")
     print(best());
+
+    originals  = [...newCreatures];
+    EVERYTHING = [...newCreatures];
+  }
+
+  if (mouseIsPressed) {
+    if (!clickedLastFrame) {
+      clickedLastFrame = true;
+    } else {
+      view.offset.add(createVector(mouseX, mouseY).sub(prevMousePos));
+    } 
+  }
+
+  if (keyIsDown) {
+    switch(keyCode) {
+      case LEFT_ARROW:
+        view.zoom -= 0.0025;
+        break;
+      case RIGHT_ARROW:
+        view.zoom += 0.0025;
+    }
   }
 
   creatures = [...newCreatures];
@@ -93,17 +172,17 @@ function draw() {
 }
 
 function mousePressed() {
-  let record = Infinity;
-  let cr = null;
-  for (let i = creatures.length-1; i >= 0; i--) {
-    let creature = creatures[i];
+  // let record = Infinity;
+  // let cr = null;
+  // for (let i = creatures.length-1; i >= 0; i--) {
+  //   let creature = creatures[i];
     
-    if (dist(mouseX, mouseY, creature.pos.x, creature.pos.y) < record) {
-      cr = creature;
-    }
-  }
+  //   if (dist(mouseX, mouseY, creature.pos.x, creature.pos.y) < record) {
+  //     cr = creature;
+  //   }
+  // }
 
-  print(cr);
+  // print(cr);
 }
 
 function keyPressed() {
@@ -122,7 +201,7 @@ function best() {
   let record = -1;
   let creature = null;
 
-  for (let i of creatures) {
+  for (let i of EVERYTHING) {
     if (i.score > record) {
       record = i.score;
       creature = i;
@@ -131,3 +210,4 @@ function best() {
 
   return [creature, record]; 
 }
+
