@@ -29,13 +29,28 @@ function setup() {
 
   originals = [...creatures];
 
-  for (let i = 0; i < initialSize * 15; i++) {
-    food.push(createVector(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
-  }
-
   view.offset = createVector(width/2, height/2);
 
-  console.log("Version 2.7.11");
+  console.log("Version 2.8.3");
+
+
+  // --------------------------------------------------- FOOD -------------------------------------------------------------------
+
+  for (let i = 0; i < initialSize * 15; i++) {
+    food.push(createVector(random(-worldWidth/2, -75), random(-worldHeight/2, -75)));
+  }
+
+  for (let i = 0; i < initialSize * 51; i++) {
+    food.push(createVector(random(75, worldWidth/2), random(-worldHeight/2, -75)));
+  }
+
+  for (let i = 0; i < initialSize * 20; i++) {
+    food.push(createVector(random(75, worldWidth/2), random(75, worldHeight/2)));
+  }
+
+  for (let i = 0; i < initialSize * 75; i++) {
+    food.push(createVector(random(-worldWidth/2, -75), random(75, worldHeight/2)));
+  }
 }
 
 function draw() {
@@ -50,9 +65,11 @@ function draw() {
   rect(-worldWidth/2, -worldHeight/2, worldWidth, worldHeight);
   stroke(0);
 
-  for (let i of food) {
+  let visibleFood = food.filter(elem => (elem.x > 0 || elem.x < width || elem.y > 0 || elem.y < height));
+
+  for (let i of visibleFood) {
     fill(0, 255, 0);
-    circle(i.x, i.y, 4);
+    circle(i.x, i.y, 6);
   }
 
   let newCreatures = [];
@@ -80,7 +97,7 @@ function draw() {
     let bestest = best()[0];
     let food = [];
 
-    for (let i = 0; i < initialSize * 15; i++) {
+    for (let i = 0; i < initialSize * 25; i++) {
       food.push(createVector(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
     }
 
@@ -138,11 +155,17 @@ function draw() {
     }
 
     for (let i = floor(initialSize/2); i < initialSize; i++) {
-      newCreatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
+      newCreatures.push(new Creature(0, 0));
+    }
+
+    for (let i of newCreatures) {
+      i.setPos(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
+      i.score *= 0;
     }
 
     print("Mass Extinction")
     print(best());
+    print(newCreatures);
 
     originals  = [...newCreatures];
     EVERYTHING = [...newCreatures];
@@ -154,6 +177,24 @@ function draw() {
     } else {
       view.offset.add(createVector(mouseX, mouseY).sub(prevMousePos));
     } 
+
+    let record = 8;
+    let cr = null;
+    for (let i = creatures.length-1; i >= 0; i--) {
+      let creature = creatures[i];
+
+      let pos = screenToWorld(creature.pos);
+      
+      if (dist(mouse.x, mouse.y, creature.pos.x, creature.pos.y) < record) {
+        cr = creature;
+      }
+    }
+
+    if (cr) {
+      cr.score += 0.001;
+      cr.energy += 0.05;
+      print(cr.score);
+    }
   }
 
   if (keyIsDown) {

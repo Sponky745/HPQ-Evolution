@@ -176,10 +176,14 @@ class Creature {
       sum.add(i.pos);
       this.dir.add(i.vel.heading());
 
-      for (let j of food) {
-        if (p5.Vector.dist(i.pos, j) <= i.r + 2) {
-          this.energy += random(-0.5, 2);
-          j.set(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
+      let usefulFood = food.filter((elem) => p5.Vector.dist(i.pos, elem));
+
+      for (let j = food.length-1; j >= 0; j--) {
+        let f = food[j];
+        if (p5.Vector.dist(i.pos, f) <= i.r + 2) {
+          this.energy += random(-0.5, 3);
+          // j.set(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
+          food.splice(j, 1);
         }
       }
     }
@@ -248,6 +252,20 @@ class Creature {
     offspring.mutate();
 
     return offspring;
+  }
+
+  setPos(x, y) {
+    let offsets = [];
+
+    for (let i of this.vertices) {
+      offsets.push(p5.Vector.sub(i.pos, this.pos));
+    }
+
+    this.pos.set(x, y);
+
+    for (let i = 0; i < this.vertices.length; i++) {
+      this.vertices[i].pos.set(this.pos.x + offsets[i].x, this.pos.y + offsets[i].y);
+    }
   }
 
   // ------------------------------------------ MUTATION METHODS ------------------------------------------------------------------------------------------
@@ -406,23 +424,36 @@ class Creature {
   }
 
   mutate() {
+
+    let mutated = false;
+
     if (random(1) < 0.8) {
       this.changeWeight();
+      mutated = true;
     }
     if (random(1) < 0.4) {
       this.moveVert();
+      mutated = true;
     }
     if (random(1) < 0.3) {
       this.addEdge();
+      mutated = true;
     }
     if (random(1) < 0.15) {
-      this.addVert();    
+      this.addVert();  
+      mutated = true;  
     }
     if (random(1) < 0.2) {
       this.addTarget();
+      mutated = true;
     }
     else if (random(1) < 0.6) {
       this.removeTarget();
+      mutated = true;
+    }
+
+    if (!mutated) {
+      this.mutate();
     }
   }
 }
