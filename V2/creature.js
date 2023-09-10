@@ -10,8 +10,9 @@ class Creature {
     this.energy      = 4;
     this.dir         = createVector();
     this.score       = 0;
-    this.child       = null;
+    this.children    = [];
     this.fitness     = 0;
+    this.generation  = 0;
 
     for (let i = 0; i < Creature.STARTING_SIZE; i++) {
       this.vertices.push(new Vertex(this.nextVertice, 
@@ -55,6 +56,8 @@ class Creature {
       }
       // vert.targets.push(random(this.edges));
     }
+
+    this.originals = this.vertices.map(elem => elem.clone());
   }
 
   connect() {
@@ -214,13 +217,10 @@ class Creature {
   clone() {
     let newOne = new Creature(this.pos.x, this.pos.y);
 
-    newOne.vertices=[];newOne.edges=[];newOne.nextVertice=this.nextVertice;newOne.numI=this.numI;newOne.numO=this.numO; 
-
-    let randomOffset = p5.Vector.random2D().mult(50);
+    newOne.vertices=[];newOne.edges=[];newOne.nextVertice=this.nextVertice;newOne.numI=this.numI;newOne.numO=this.numO;newOne.generation=this.generation;
 
     for (let i = 0; i < this.vertices.length; i++) {
       newOne.vertices[i] = this.vertices[i].clone();
-      newOne.vertices[i].pos.add(randomOffset);
     }
 
     for (let i = 0; i < this.edges.length; i++) {
@@ -238,6 +238,8 @@ class Creature {
       }
     }
 
+    newOne.originals = newOne.vertices.map(elem => elem.clone());
+
     newOne.connect();
 
     return newOne;
@@ -245,11 +247,20 @@ class Creature {
 
   reproduce() {
     let offspring = this.clone();
-    
+
+    let randomOffset = p5.Vector.random2D().mult(50);
+
+    for (let i of offspring.vertices) {
+      i.pos.add(randomOffset);
+    }
+
     offspring.score = this.score;
     this.score += 3;
 
     offspring.mutate();
+
+    this.children.push(offspring);
+    offspring.generation++;
 
     return offspring;
   }

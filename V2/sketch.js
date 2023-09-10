@@ -31,7 +31,7 @@ function setup() {
 
   view.offset = createVector(width/2, height/2);
 
-  console.log("Version 2.8.3");
+  console.log("Version 2.9.3");
 
 
   // --------------------------------------------------- FOOD -------------------------------------------------------------------
@@ -65,12 +65,12 @@ function draw() {
   rect(-worldWidth/2, -worldHeight/2, worldWidth, worldHeight);
   stroke(0);
 
-  let visibleFood = food.filter(elem => (elem.x > 0 || elem.x < width || elem.y > 0 || elem.y < height));
+  // let visibleFood = food.filter(elem => (elem.x > 0 || elem.x < width || elem.y > 0 || elem.y < height));
 
-  for (let i of visibleFood) {
-    fill(0, 255, 0);
-    circle(i.x, i.y, 6);
-  }
+  // for (let i of visibleFood) {
+  //   fill(0, 255, 0);
+  //   circle(i.x, i.y, 6);
+  // }
 
   let newCreatures = [];
 
@@ -106,20 +106,9 @@ function draw() {
 
     let bestOfTheBloodlines = [];
 
+
     for (let i of originals) {
-      let current         = i;
-      let bloodlineRecord = -1;
-      let bestCreature    = null
-
-      while (current) {
-        if (bloodlineRecord < current.score) {
-          bloodlineRecord = current.score;
-          bestCreature    = current;
-        }
-        current = i.child;
-      }
-
-      bestOfTheBloodlines.push(bestCreature);
+      bestOfTheBloodlines.push(maxnode(i));
     }
 
     for (let i of bestOfTheBloodlines) {
@@ -148,24 +137,28 @@ function draw() {
     };
 
 
-    for (let i = 1; i < floor(initialSize/2); i++) {
+    newCreatures[1] = bestest.reproduce();
+    newCreatures[2] = bestest.reproduce();
+
+
+    for (let i = 3; i < floor(initialSize/2); i++) {
       const parent = selectParent(bestOfTheBloodlines);
 
       newCreatures.push(parent.reproduce());
     }
 
     for (let i = floor(initialSize/2); i < initialSize; i++) {
-      newCreatures.push(new Creature(0, 0));
+      newCreatures.push(new Creature(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2)));
     }
 
     for (let i of newCreatures) {
-      i.setPos(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
+      // i.setPos(random(-worldWidth/2, worldWidth/2), random(-worldHeight/2, worldHeight/2));
       i.score *= 0;
     }
 
     print("Mass Extinction")
     print(best());
-    print(newCreatures);
+    // print(newCreatures);
 
     originals  = [...newCreatures];
     EVERYTHING = [...newCreatures];
@@ -252,3 +245,20 @@ function best() {
   return [creature, record]; 
 }
 
+function maxnode(root) {
+  let stack        = [root];
+  let nodes        = [];
+
+  while (stack.length > 0) {
+    let selected = stack.pop();
+    for (let i of selected.children) {
+      stack.push(i);
+    }
+
+    nodes.push(selected);
+  }
+
+  nodes = nodes.sort((a, b) => a.val - b.val);
+  creature = nodes[0];
+  return creature;
+};

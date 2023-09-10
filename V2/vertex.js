@@ -126,6 +126,8 @@ class Vertex {
     newOne.inputFunc = this.inputFunc;
     newOne.activationFunc = this.activationFunc;
 
+    newOne.id = this.id;
+
     return newOne;
   }
 }
